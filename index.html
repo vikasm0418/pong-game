@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+		<meta charset="UTF-8">
+		<title>Pong</title>
+</head>
+<body>
+<script>
+
+    var bg = new Image();
+    bg.src = "/home/vicky/Desktop/javascript/pong/bg.jpg";
+	var WIDTH=1500,HEIGHT=900,pi=Math.PI;
+	var UpArrow = 38,DownArrow = 40;
+	var canvas,ctx,keystate;
+	var player,ai,ball,background;
+
+    background = {
+    	x:null,
+    	y:null,
+    	width : bg.width,
+    	height : bg.height,
+    	
+    	update : function(){
+    		this.x = (ball.x - WIDTH/2 -950)*0.2 ;
+    		this.y = (ball.y - HEIGHT/2 -550 )*0.2;
+    	},
+
+    	draw : function(){
+    		ctx.drawImage(bg,this.x,this.y);
+    	}
+    };
+
+	player = {
+		x:null,
+		y:null,
+		width :20,
+		height: 150,
+		
+		update : function(){
+			if(keystate[UpArrow] && this.y -7 >=0) this.y -= 7;
+			if(keystate[DownArrow] && this.y + this.height +7 <= HEIGHT) this.y += 7;
+		},
+		draw: function(){
+			ctx.fillRect(this.x,this.y,this.width,this.height);
+		}
+	};
+
+	ai = {
+		x:null,
+		y:null,
+		width :20,
+		height: 150,
+		
+		update : function(){
+			var dest= ball.y - (this.height - ball.side)/2;
+			//if(this.y >= 0 && this.height + this.y <= HEIGHT)
+				this.y += (dest-this.y)*0.05;
+		},
+		draw: function(){
+			ctx.fillRect(this.x,this.y,this.width,this.height);
+		}
+	};
+	ball = {
+		x:null,
+		y:null,
+		side :20,
+		vel: null,
+		speed : 8,
+		update : function(){
+			var hitdetect = function(px,bx,py,by,pw,bw,ph,bh){
+      	    	return (bx <px+pw && px <bx+bw && py<by+bh && by <py+ph) ;
+      		};
+      		var play = this.vel.x < 0 ? player : ai;
+      		if(hitdetect(play.x,this.x,play.y,this.y,play.width,this.side,play.height,this.side))
+      		{
+      			
+      			var n =(this.y+this.side - play.y)/(play.height+this.side);
+      			var phi = 0.25*pi*(2*n-1);
+
+      			var smash = Math.abs(phi) > 0.2*pi ? 1.5 : 1;
+      			this.vel.y = smash*this.speed*Math.sin(phi);
+      			this.vel.x =smash*(play === player? 1:-1)*this.speed*Math.cos(phi);
+        		this.x += this.vel.x;
+       		}
+      		else
+				this.x += this.vel.x;
+			if(this.y + this.side < HEIGHT && this.y > 0 )
+					this.y += this.vel.y ;
+		    else{
+		    		this.vel.y = -this.vel.y;
+		    		this.y += this.vel.y ;
+		    	}
+		   if(this.x + this.side < 0)
+		{
+			
+    		    ctx.fillStyle = "#FC0";
+    		    ctx.font = "italic bold 100px Arial ,sans-serif";
+    		    ctx.fillText('Mission Failed', 490, 200, 500);
+    		    window.deleteAnimationFrame(loop,canvas);
+    	   }	
+		else if(this.x  > WIDTH)
+		{
+			
+			ctx.fillStyle = "#FC0";
+    		    ctx.font = "italic bold 100px Arial ,sans-serif";
+    		    ctx.fillText('Level_1 Complete', 460, 200, 500);
+    		    window.deleteAnimationFrame(loop,canvas);
+
+		}
+			},
+		draw: function(){
+			ctx.fillRect(this.x,this.y,this.side,this.side);
+		}
+	};
+		
+	function main(){
+		canvas = document.createElement("canvas");
+		canvas.width = WIDTH;
+		canvas.height = HEIGHT;
+		ctx = canvas.getContext("2d");
+		document.body.appendChild(canvas);
+        keystate = {};
+		document.addEventListener("keydown", function(evt){
+			keystate[evt.keyCode] = true ;
+		});
+		document.addEventListener("keyup", function(evt){
+			delete keystate[evt.keyCode];
+		});
+
+		init();
+
+		var loop = function(){
+			update();
+			draw();
+		ctx.fillStyle = "#FC0";
+    	ctx.font = "italic bold 18px Arial ,sans-serif";
+    	ctx.fillText('game by : legend_killer', 650, 810, 500);
+			window.requestAnimationFrame(loop, canvas);
+		};
+		window.requestAnimationFrame(loop,canvas);
+	}
+
+	function init(){
+		player.x =player.width;
+		player.y = (HEIGHT - player.height)/2;
+
+		ai.x = WIDTH - (player.width + ai.width);
+		ai.y = (HEIGHT-ai.height)/2;
+
+		ball.x = (WIDTH - ball.side)/2;
+		ball.y = (HEIGHT - ball.side)/2;
+
+		ball.vel = {
+			y : 0,
+			x : ball.speed
+		};
+
+		background.x = ball.x + WIDTH/2;
+		background.y = ball.y - HEIGHT/2;
+
+	}	
+
+	function update(){
+		background.update();
+		ball.update();
+		player.update();
+		ai.update();
+		
+	}
+
+	function draw(){
+		ctx.fillRect(0,0,WIDTH,HEIGHT);
+		ctx.save();
+		ctx.fillStyle = "#fff";
+		background.draw();
+		ball.draw();
+		player.draw();
+		ai.draw();
+		
+		
+		var w = 2;
+		var x = (WIDTH - w)/2;
+		var y = 0;
+		var step = HEIGHT/30;
+		while(y<HEIGHT){
+			ctx.fillRect(x,y,w,step/2);
+			y +=step;
+		}
+
+		ctx.restore();
+	}
+
+main();	
+</script>
+</body>
+</html>
